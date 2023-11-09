@@ -1,8 +1,11 @@
 <?php
 
+use \App\Router\Router;
+use \App\Interfaces\HttpMethods;
+use \App\Router\Route;
+use \App\Response\Response;
 
-$router = \App\Router\Router::getInstance();
 
-$router->RegisterRoute(new \App\Router\Route("/", \App\Interfaces\HttpMethods::GET, function () {
-    return new App\Response\Response("Test", 200, headers: ["Content-Type" => "application/json"]);
+Router::registerRoute(new Route('/', HttpMethods::GET, function () {
+    return new Response('Test', 200, headers: ['Content-Type" => "application/json']);
 }));

@@ -11,5 +11,7 @@
             "name": "Luka Baksa"
         }
     ],
-    "require": {}
+    "require": {
+        "twig/twig": "^3.7"
+    }
 }
