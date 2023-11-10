@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'lukabaksa/factory-praks.com',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => '27da77d28b117f5e60052058728f1d8878c90d2f',
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
+        'reference' => NULL,
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'lukabaksa/factory-praks.com' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '27da77d28b117f5e60052058728f1d8878c90d2f',
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
+            'reference' => NULL,
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

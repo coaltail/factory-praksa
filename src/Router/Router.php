@@ -3,7 +3,9 @@
 namespace App\Router;
 
 use App\Interfaces\RequestInterface;
+use App\Request\Request;
 use App\Response\Response;
+use JetBrains\PhpStorm\NoReturn;
 
 class Router
 {
@@ -14,26 +16,47 @@ class Router
     {
         self::$routes[] = $route;
     }
-
-    public static function resolve(RequestInterface $request): callable|Response
+    public static function resolve(Request $request)
     {
-        $matchingRoute = self::findMatchingRoute($request);
+        $filteredRoutes = array_filter(self::$routes, function (Route $route) use ($request) {
+            return $route instanceof ParamsRoute
+                ? self::matchParamsRoute($route, $request)
+                : $route->matches($request);
+        });
 
-        if ($matchingRoute !== null) {
-            return $matchingRoute->getCallback();
+        $filteredRoute = reset($filteredRoutes);
+
+        if ($filteredRoute) {
+            return $filteredRoute instanceof ParamsRoute
+                ? self::handleParamsRoute($filteredRoute, $request)
+                : $filteredRoute->getCallback($request->getRequestParams());
         }
 
-        return new Response('Not Found', 404);
+        self::handleNotFound();
     }
 
-    private static function findMatchingRoute(RequestInterface $request): ?Route
+    private static function matchParamsRoute(ParamsRoute $route, Request $request): bool
     {
-        foreach (self::$routes as $route) {
-            if ($route->matches($request)) {
-                return $route;
-            }
-        }
+        $urlWithoutParams = $route->getUrlWithoutParameters();
+        $urlWithoutParamsPlaceholder = str_replace("/{", "/", $urlWithoutParams);
+        $position = strrpos($request->getUrl(), "/");
 
-        return null;
+        return $urlWithoutParamsPlaceholder === substr($request->getUrl(), 0, $position) && $route->getMethod() === $request->getMethod();
+    }
+
+
+    private static function handleParamsRoute(ParamsRoute $route, Request $request)
+    {
+        $urlWithoutParams = $route->getUrlWithoutParameters();
+        $paramName = substr(strrchr($request->getUrl(), "/"), 1);
+        $params = $request->getRequestParams() + [$urlWithoutParams => $paramName];
+
+        return $route->getCallback($params);
+    }
+
+    #[NoReturn] private static function handleNotFound()
+    {
+        echo "This site does not exist";
+        exit;
     }
 }
