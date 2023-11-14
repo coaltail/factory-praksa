@@ -13,7 +13,7 @@ RUN apt-get update && \
     curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
     composer install --no-scripts --no-autoloader && \
     composer dump-autoload --optimize
-
+RUN docker-php-ext-install pdo_mysql
 # Make port 80 available to the world outside this container
 EXPOSE 80
 
