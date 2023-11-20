@@ -12,6 +12,7 @@ class Connection
     protected static ?PDO $instance = null;
     private static ?Connection $connection = null;
 
+    private ?PDOStatement $query = null;
     protected function __construct()
     {
         // Private constructor to prevent instantiation
@@ -26,7 +27,6 @@ class Connection
                 "db_pass" => $_ENV['MYSQL_PASSWORD'],
                 "db_name" => $_ENV['MYSQL_DATABASE'],
                 "db_port" => '3306',
-                "db_charset" => "UTF-8"
             );
 
             try {
@@ -51,30 +51,32 @@ class Connection
 
     public function select(string $query, array $values = []): PDOStatement
     {
-        $selectQuery = self::$instance->prepare($query);
+        $this->query = self::$instance->prepare($query);
         if (!empty($values) && $this->is_assoc_array($values)) {
             foreach ($values as $key => $val) {
-                $selectQuery->bindParam(":$key", $val);
+                $this->query->bindParam(":$key", $val);
             }
         } else {
 
             foreach ($values as $index => $val) {
-                $selectQuery->bindParam($index + 1, $val);
+                $this->query->bindParam($index + 1, $val);
             }
         }
 
+        $this->query->execute();
 
-        return $selectQuery;
+
+        return $this->query;
     }
 
-    public function fetchAssoc(PDOStatement $statement)
+    public function fetchAssoc()
     {
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        return $this->query->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function fetchAssocAll(PDOStatement $statement)
+    public function fetchAssocAll(): bool|array
     {
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        return $this->query->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function insert(string $tableName, array $data): ?int
@@ -90,13 +92,13 @@ class Connection
             $query = "INSERT INTO {$tableName} ({$columns}) VALUES ({$values})";
 
             // Prepare and execute the query
-            $statement = self::$instance->prepare($query);
+            $this->query = self::$instance->prepare($query);
 
             foreach ($data as $key => $value) {
-                $statement->bindValue(':' . $key, $value);
+                $this->query->bindValue(':' . $key, $value);
             }
 
-            $result = $statement->execute();
+            $result = $this->query->execute();
 
             if ($result) {
                 // Return the last inserted ID
@@ -127,14 +129,46 @@ class Connection
         }
 
         $query = "INSERT INTO {$tableName} ({$columns}) VALUES " . implode(', ', $values);
-        $statement = self::$instance->prepare($query);
+        $this->query = self::$instance->prepare($query);
 
         foreach ($data as $row) {
             foreach ($row as $key => $value) {
-                $statement->bindValue(':' . $key, $value);
+                $this->query->bindValue(':' . $key, $value);
             }
-            $statement->execute();
+            $this->query->execute();
         }
+    }
+
+    public function update(string $tableName, array $values, array $condition): void
+    {
+
+        $setValues = array_map(function ($key) {
+            return $key . " = :" . $key;
+        }, array_keys($values));
+        $setClause = implode(", ", $setValues);
+
+
+        $whereValues = array_map(function ($key) {
+            return $key . " = :" . $key;
+        }, array_keys($condition));
+        $whereClause = implode(" AND ", $whereValues);
+
+        $query = "UPDATE " . $tableName . " SET " . $setClause . " WHERE " . $whereClause;
+
+        $this->query = self::$instance->prepare($query);
+
+        foreach ($values as $key => $value) {
+            $this->query->bindValue(":" . $key, $value);
+        }
+
+        foreach ($condition as $key => $value) {
+            $this->query->bindValue(":" . $key, $value);
+        }
+
+        // Execute the query
+        $this->query->execute();
+
+
     }
 
     private function is_assoc_array(array $values): bool
