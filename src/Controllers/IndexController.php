@@ -6,7 +6,7 @@ use App\Interfaces\ResponseInterface;
 use App\Response\HtmlResponse;
 use App\Response\JsonResponse;
 use App\Response\Response;
-
+use App\Request\Request;
 class IndexController
 {
 
@@ -15,9 +15,9 @@ class IndexController
 
     }
 
-    public function indexAction(string $content): Response
+    public static function indexAction(Request $request): Response
     {
-        return new Response($content);
+        return new Response('This is the new resposne bla bla');
     }
 
     public function indexJsonAction(string $content, int $statusCode): JsonResponse

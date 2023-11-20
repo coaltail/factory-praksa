@@ -89,7 +89,7 @@ class Connection
             // Construct the SQL query
             $columns = implode(', ', array_keys($data));
             $values = ':' . implode(', :', array_keys($data));
-            $query = "INSERT INTO {$tableName} ({$columns}) VALUES ({$values})";
+            $query = "INSERT INTO $tableName ($columns) VALUES ($values)";
 
             // Prepare and execute the query
             $this->query = self::$instance->prepare($query);
@@ -125,10 +125,10 @@ class Connection
 
         foreach ($data as $row) {
             $placeholders = ':' . implode(', :', array_keys($row));
-            $values[] = "({$placeholders})";
+            $values[] = "($placeholders)";
         }
 
-        $query = "INSERT INTO {$tableName} ({$columns}) VALUES " . implode(', ', $values);
+        $query = "INSERT INTO $tableName ($columns) VALUES " . implode(', ', $values);
         $this->query = self::$instance->prepare($query);
 
         foreach ($data as $row) {

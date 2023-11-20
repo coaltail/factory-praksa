@@ -9,52 +9,62 @@ use JetBrains\PhpStorm\NoReturn;
 
 class Router
 {
-
     private static array $routes = [];
 
     public static function registerRoute(Route $route): void
     {
         self::$routes[] = $route;
     }
+
     public static function resolve(Request $request)
     {
-        $filteredRoutes = array_filter(self::$routes, function (Route $route) use ($request) {
-            return $route instanceof ParamsRoute
-                ? self::matchParamsRoute($route, $request)
-                : $route->matches($request);
-        });
+        $requestUrlSegments = explode("/", $request->getUrl());
 
-        $filteredRoute = reset($filteredRoutes);
+        $filteredRoute = self::findMatchingRoute($requestUrlSegments);
 
-        if ($filteredRoute) {
-            return $filteredRoute instanceof ParamsRoute
-                ? self::handleParamsRoute($filteredRoute, $request)
-                : $filteredRoute->getCallback($request->getRequestParams());
+        if ($filteredRoute !== false) {
+            $urlParams = $filteredRoute->fetchParams($request->getUrl());
+            return $filteredRoute->invokeCallback($request, $urlParams);
         }
 
         self::handleNotFound();
     }
 
-    private static function matchParamsRoute(ParamsRoute $route, Request $request): bool
+    private static function findMatchingRoute(array $requestUrlSegments): ?Route
     {
-        $urlWithoutParams = $route->getUrlWithoutParameters();
-        $urlWithoutParamsPlaceholder = str_replace("/{", "/", $urlWithoutParams);
-        $position = strrpos($request->getUrl(), "/");
+        foreach (self::$routes as $route) {
+            $routeUrlSegments = explode("/", $route->getUrl());
 
-        return $urlWithoutParamsPlaceholder === substr($request->getUrl(), 0, $position) && $route->getMethod() === $request->getMethod();
+            if (count($requestUrlSegments) !== count($routeUrlSegments)) {
+                continue;
+            }
+
+            if (self::areSegmentsMatching($requestUrlSegments, $routeUrlSegments)) {
+                return $route;
+            }
+        }
+
+        return null;
     }
 
-
-    private static function handleParamsRoute(ParamsRoute $route, Request $request)
+    private static function areSegmentsMatching(array $requestUrlSegments, array $routeUrlSegments): bool
     {
-        $urlWithoutParams = $route->getUrlWithoutParameters();
-        $paramName = substr(strrchr($request->getUrl(), "/"), 1);
-        $params = $request->getRequestParams() + [$urlWithoutParams => $paramName];
+        foreach ($routeUrlSegments as $index => $routeUrlSegment) {
+            if (strlen($routeUrlSegment) >= 2 && $routeUrlSegment[0] === "{" &&
+                $routeUrlSegment[strlen($routeUrlSegment) - 1] === "}"
+            ) {
+                continue;
+            }
 
-        return $route->getCallback($params);
+            if ($routeUrlSegment !== $requestUrlSegments[$index]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    #[NoReturn] private static function handleNotFound()
+    #[NoReturn] private static function handleNotFound(): void
     {
         echo "This site does not exist";
         exit;

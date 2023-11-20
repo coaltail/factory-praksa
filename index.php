@@ -14,16 +14,8 @@ $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 $req = new Request();
-$conn = Connection::getInstance();
-$userData = [
-    'username' => 'john_doe',
-    'email' => 'john.doe@example.com',
-    'password' => 'hashed_password',
-    'created_at' => '2023-11-14 12:00:00'
-];
 
 
-echo $conn->insert('users', $userData);
 $response = Router::resolve($req);
 
 echo $response->send();
