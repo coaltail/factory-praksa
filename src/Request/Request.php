@@ -11,16 +11,17 @@ class Request implements RequestInterface
 
     public function __construct()
     {
-        $this->requestParams = [
-            'GET' => $_GET,
-            'POST' => $_POST
-        ];
+        $this->requestParams = array_merge($_GET, $_POST);
     }
 
 
     public function getUrl(): string
     {
         return parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    }
+
+    public function getParam($param) {
+        return $this->requestParams[$param] ?? '';
     }
 
     public function getMethod(): ?HttpMethods

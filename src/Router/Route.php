@@ -26,6 +26,9 @@ class Route
         $this->callback = $callback;
     }
 
+    /**
+     * @throws Exception
+     */
     public static function get(string $url, $callback): void
     {
         Router::registerRoute(new static($url, HttpMethods::GET, $callback));
@@ -49,9 +52,9 @@ class Route
         return $this->httpMethod;
     }
 
-    public function invokeCallback(Request $request, array $params = []): Response
+    public function invokeCallback(Request $request, array $params = [])
     {
-        return call_user_func($this->callback, $request, ...$params);
+        return call_user_func($this->callback, $request, ...array_values($params));
     }
 
     public function fetchParams($url): array
@@ -83,13 +86,12 @@ class Route
 
     private function processRouteSegment(string $routeUrlSegment, array $requestUrlSegments, int $index, array &$params): void
     {
-        if (strlen($routeUrlSegment) >= 2 && $routeUrlSegment[0] === "{" && $routeUrlSegment[strlen($routeUrlSegment) - 1] === "}") {
-            if (!isset($requestUrlSegments[$index][0])) {
-                header("HTTP/1.0 400 Bad Request");
-                exit;
+        if (strlen($routeUrlSegment) >= 2 && $routeUrlSegment[0] === "{" &&
+            $routeUrlSegment[strlen($routeUrlSegment) - 1] === "}"
+        ) {
+            if (isset($requestUrlSegments[$index])) {
+                $params[substr($routeUrlSegment, 1, -1)] = $requestUrlSegments[$index];
             }
-
-            $params[substr($routeUrlSegment, 1, -1)] = $requestUrlSegments[$index];
         }
     }
 }

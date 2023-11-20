@@ -9,17 +9,14 @@ use Exception;
 class UserController
 {
 
-    public function createUser(Request $request): Response
+    public static function createUser(Request $request): Response
     {
-        $params = $request->getRequestParams();
-        print_r($params);
         try {
-
             $username = $request->getParam('username');
             $password = $request->getParam('password');
             $firstname = $request->getParam('firstname');
             $lastname = $request->getParam('lastname');
-
+            $email = $request->getParam('email');
             // Hash the password (you should use a secure hashing algorithm)
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
@@ -33,6 +30,7 @@ class UserController
                 'firstname' => $firstname,
                 'lastname' => $lastname,
                 'created_at' => $createdAt,
+                'email' => $email,
             ];
 
             // Instantiate the Connection class
