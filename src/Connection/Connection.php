@@ -138,7 +138,14 @@ class Connection
             $this->query->execute();
         }
     }
-
+    public function addColumn(string $tableName, array $values): void
+    {
+        $query = "ALTER TABLE ".$tableName." ".implode(", ", array_map(function($key, $value) {
+                return "ADD COLUMN IF NOT EXISTS ".$key." ".$value;
+            }, array_keys($values), $values));
+        $this->query = self::$instance->prepare($query);
+        $this->query->execute();
+    }
     public function update(string $tableName, array $values, array $condition): void
     {
 
@@ -169,6 +176,46 @@ class Connection
         $this->query->execute();
 
 
+    }
+    public function checkColumn(string $tableName, string $columnName): bool
+    {
+        try {
+            $query = $this->select("SHOW COLUMNS FROM " . $tableName . " LIKE ?", [$columnName]);
+            $result = $this->fetchAssoc($query);
+            return !empty($result);
+        } catch (PDOException $e) {
+            // Handle the exception as needed
+            throw new RuntimeException('Error checking column: ' . $e->getMessage());
+        }
+    }
+    public function delete(string $tableName, array $conditions = []): void
+    {
+        $query = "DELETE FROM ".$tableName;
+
+        if(count($conditions) != 0)
+        {
+            $query .= " WHERE ";
+        }
+
+        foreach($conditions as $index => $condition)
+        {
+            $query .= implode(" ", array_map(function($condIndex, $value) use ($index)
+                {
+                    if($condIndex === 2)
+                    {
+                        return ":cond".$index;
+                    }
+                    return $value;
+                }, array_keys($condition), $condition))." ";
+        }
+
+        $this->query = self::$instance->prepare($query);
+
+        foreach($conditions as $index => $condition)
+        {
+            $this->query->bindValue("cond".$index, $condition[2]);
+        }
+        $this->query->execute();
     }
 
     private function is_assoc_array(array $values): bool

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Connection\Connection;
+use App\Traits\HasDeletes;
+use App\Traits\HasTimestamps;
 use PDO;
 use ReflectionClass;
 
 class Model
 {
+    use HasTimestamps, HasDeletes;
     protected static ?string $tableName = null;
     protected static ?string $primaryKey = null;
     protected static ?Connection $connection = null;
